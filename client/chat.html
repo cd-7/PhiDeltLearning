@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhiDeltLearning - Chat</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/normalize.css" />
+  </head>
+  <body>
+    <nav>
+      <img src="images/phi-delt.png" />
+      <p>PhiDeltLearning</p>
+    </nav>
+    <div id="load">
+      <div class="loader"></div>
+    </div>
+    <div class="container">
+      <div class="sidenav">
+        <a href="/client/chat.html" id="newChat">
+          <i class="fa-solid fa-comments"></i> &nbsp;New Chat
+        </a>
+        <h3>Previous Chats:</h3>
+        <div id="prev" class="grid"></div>
+      </div>
+      <div class="chat">
+        <div id="messages"></div>
+        <div class="user_input">
+          <textarea id="input" placeholder="Message ChatGPT..."></textarea>
+          <button id="send">Send</button>
+        </div>
+      </div>
+    </div>
+    <script src="js/chat.js"></script>
+    <script
+      src="https://kit.fontawesome.com/f29c0974db.js"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

@@ -3,24 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>PhiDeltLearning - Login</title>
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/normalize.css" />
   </head>
   <body>
-    <nav>
-      <img src="images/phi-delt.png" />
-      <p>PhiDeltLearning</p>
-    </nav>
-    <div class="container">
-      <div></div>
-      <div class="chat">
-        <div id="messages"></div>
-        <div class="user_input">
-          <textarea id="input" placeholder="Message ChatGPT..."></textarea>
-          <button id="send">Send</button>
-        </div>
-      </div>
+    <div class="login">
+      <img class="logo" src="images/logo.png" alt="flag" />
+      <div class="loader"></div>
+      <form>
+        <label for="email">Email:</label>
+        <input id="email" type="email" placeholder="Email..." />
+        <label for="password">Phi Delt Password:</label>
+        <input id="password" type="password" placeholder="Password..." />
+        <button id="submit">Submit</button>
+      </form>
     </div>
     <script src="js/index.js"></script>
   </body>

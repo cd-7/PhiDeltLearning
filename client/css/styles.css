@@ -10,6 +10,7 @@ html {
     "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
     sans-serif;
   overflow-x: hidden;
+  overflow-y: hidden;
   touch-action: manipulation;
 }
 
@@ -19,6 +20,10 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   background: rgb(247, 247, 247);
+}
+
+.grid {
+  display: grid;
 }
 
 nav {
@@ -33,6 +38,7 @@ nav {
 
 nav img {
   width: 15%;
+  max-width: 200px;
 }
 
 nav p {
@@ -43,9 +49,8 @@ nav p {
 
 .container {
   width: 100vw;
-  height: 84vh;
+  height: 86vh;
   display: grid;
-  grid-template-columns: 20% 80%;
 }
 
 .chat {
@@ -56,7 +61,7 @@ nav p {
 
 #messages {
   height: fit-content;
-  max-height: 70vh;
+  max-height: 68vh;
   display: grid;
   width: 90%;
   justify-self: center;
@@ -90,13 +95,18 @@ nav p {
   font-weight: 500;
   font-size: 19px;
   margin: 0;
+  word-wrap: break-word;
 }
 
 .user_input {
   height: 12vh;
+  width: 95%;
+  max-width: 900px;
   display: grid;
-  grid-template-columns: 85% 15%;
-  padding: 20px;
+  grid-template-columns: 80% 20%;
+  padding: 10px;
+  justify-self: center;
+  align-self: center;
 }
 
 #input {
@@ -107,7 +117,7 @@ nav p {
 
 #send {
   margin: 3px;
-  background: #0080ff;
+  background: var(--color-azure);
   color: white;
   outline: 0;
   border: 0;
@@ -115,7 +125,157 @@ nav p {
   font-weight: 700;
   font-size: 20px;
   transition: 0.4s;
+  cursor: pointer;
 }
 #send:hover {
-  background: #0865c3;
+  background: #033567;
+}
+
+.sidenav {
+  padding: 5px;
+  display: none;
+  border-right: 3px solid black;
+}
+
+#newChat {
+  background: var(--color-azure);
+  color: white;
+  width: 95%;
+  max-width: 250px;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+#newChat:hover {
+  background: #033567;
+  transform: scale(1.03);
+}
+
+.sidenav h3 {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+#prev {
+  height: fit-content;
+  font-size: 20px;
+  margin: 5px;
+  max-height: calc(80vh - 86px);
+  overflow-y: scroll;
+}
+
+#prev > * {
+  color: black;
+  border: 2px solid lightgray;
+  border-bottom: 3px solid lightgrey;
+  border-radius: 10px;
+  margin: 5px;
+  padding: 10px;
+  transition: 0.3s;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#prev > *:hover {
+  background: var(--color-azure);
+  color: white;
+  transform: scale(1.05);
+}
+
+@media screen and (min-width: 768px) {
+  .container {
+    grid-template-columns: 21% 79%;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.login {
+  width: 100vw;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  width: 170px;
+  height: 130px;
+  margin: 30px;
+}
+
+form {
+  display: none;
+  width: 100%;
+  max-width: 300px;
+  border: 2px solid var(--color-azure);
+  border-radius: 20px;
+  padding: 60px 20px 40px 20px;
+  margin: 0 10px 40px 10px;
+}
+
+form label {
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+#email,
+#password {
+  font-size: 18px;
+  padding: 15px 20px;
+  border: 2px solid var(--color-azure);
+  border-radius: 20px;
+  margin-bottom: 40px;
+}
+
+#submit {
+  background: var(--color-azure);
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 20px 40px;
+  border: 0;
+  border-radius: 30px;
+  transition: 0.3s;
+}
+#submit:hover {
+  background: #033567;
+}
+
+#load {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader {
+  border: 20px solid var(--color-azure);
+  border-top: 20px solid #033567;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
