@@ -23,6 +23,8 @@ app.use(cors({ origin: true }));
 
 app.post("/", async (req, res) => {
   try {
+    const code = req.body.code;
+    if (code !== "truth") return res.status(400).send();
     const message = req.body.message;
     const email = req.body.email;
     const newChat = req.body.new;
@@ -30,10 +32,21 @@ app.post("/", async (req, res) => {
     let conversationCount;
     const userRef = db.ref("users/" + sanitizeEmail(email));
 
+    userRef
+      .once("value", (snapshot) => {
+        if (!snapshot.exists()) {
+          return res.status(400).send();
+        }
+      })
+      .catch((error) => {
+        return res.status(400).send();
+      });
+
     let messages = [];
     messages.push({
       role: "system",
-      content: "You are a helpful assistant.",
+      content:
+        "You are a helpful assistant. You have the capability to use LaTeX for formatting and displaying mathematical formulas. Please use LaTeX syntax when presenting mathematical or scientific expressions. You are also capable of using Markdown for text formatting. Please utilize Markdown syntax for formatting text, such as for headings, lists, links, and emphasis.",
     });
 
     if (!newChat) {
@@ -43,7 +56,7 @@ app.post("/", async (req, res) => {
 
       const data = snapshot.val();
       if (data) {
-        for (let i = data.queryCount; i >= 1 && i >= data.queryCount - 5; i--) {
+        for (let i = data.queryCount; i >= 1 && i > data.queryCount - 1; i--) {
           let query = data["query" + i];
           if (query) {
             messages.push({ role: "user", content: query["req"] });
@@ -59,6 +72,8 @@ app.post("/", async (req, res) => {
       messages: messages,
     });
     let answer = completion.choices[0].message.content;
+
+    userRef.update({ lastUse: Date.now() });
 
     const convoCountRef = db.ref(
       `users/${sanitizeEmail(email)}/conversationCount`
@@ -78,6 +93,16 @@ app.post("/", async (req, res) => {
             },
           });
           userRef.update({ conversationCount: conversationCount });
+          if (conversationCount > 15) {
+            const oldRef = userRef.child(
+              "conversation" + (conversationCount - 15)
+            );
+            const titleRef = userRef
+              .child("titles")
+              .child("title" + (conversationCount - 15));
+            titleRef.remove();
+            oldRef.remove();
+          }
         })
         .catch((error) => {
           console.error("Error fetching conversation count:", error);
@@ -104,20 +129,20 @@ app.post("/", async (req, res) => {
           return res.status(400).send();
         });
     }
-    const completion2 = await openai.chat.completions.create({
+    const completionTitle = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-1106",
       messages: [
         {
           role: "user",
           content:
-            "Give a simple and straightforward title for this prompt: " +
+            "Give a simple and straightforward title for this prompt and ensure it's less than 10 words: " +
             message,
         },
       ],
     });
 
     if (newChat) {
-      let title = completion2.choices[0].message.content;
+      let title = completionTitle.choices[0].message.content;
       const titleObject = {};
       titleObject["title" + conversationCount] = title;
       let propertyName = Object.keys(titleObject)[0];
@@ -141,6 +166,8 @@ exports.ask = functions.https.onRequest(app);
 exports.loadPrev = functions.https.onRequest((req, res) => {
   cors2(req, res, async () => {
     try {
+      const code = req.body.code;
+      if (code !== "truth") return res.status(400).send();
       const email = req.body.email;
       if (!email) return res.status(400).send();
 
@@ -170,6 +197,9 @@ exports.loadPrev = functions.https.onRequest((req, res) => {
 exports.loadChat = functions.https.onRequest((req, res) => {
   cors2(req, res, async () => {
     try {
+      const code = req.body.code;
+      if (code !== "truth") return res.status(400).send();
+
       const email = req.body.email;
       const chatID = req.body.chatID;
       if (!email || !chatID) return res.status(400).send();
@@ -195,6 +225,7 @@ exports.login = functions.https.onRequest((req, res) => {
       let email = req.body.email;
       const password = req.body.password;
       if (email && password && password == "truth") {
+        if (!isValidEmail(email)) return res.status(400).send();
         email = sanitizeEmail(email);
       } else return res.status(400).send();
 
@@ -202,14 +233,34 @@ exports.login = functions.https.onRequest((req, res) => {
       const userSnapshot = await userRef.once("value");
       const userData = userSnapshot.val();
 
-      if (userData) {
-        return res.status(200).send();
-      } else {
+      if (!userData) {
         await userRef.update({
           conversationCount: 0,
+          lastUse: Date.now(),
         });
-        return res.status(200).send();
       }
+
+      const emailRef = db.ref("emails");
+
+      const countSnapshot = await new Promise((resolve, reject) => {
+        emailRef.child("emailCount").once("value", resolve, reject);
+      });
+
+      const count = countSnapshot.val();
+
+      emailRef.child(email).once("value", (snapshot) => {
+        if (!snapshot.exists()) {
+          const emailObject = {};
+          emailObject[email] = true;
+          let propertyName = Object.keys(emailObject)[0];
+          let propertyValue = emailObject[propertyName];
+          emailRef.update({
+            [propertyName]: propertyValue,
+            emailCount: count + 1,
+          });
+        }
+      });
+      return res.status(200).send();
     } catch (e) {
       console.error(e);
       return res.status(400).send();
@@ -217,6 +268,54 @@ exports.login = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.checkLastUses = functions.https.onRequest((req, res) => {
+  cors2(req, res, async () => {
+    try {
+      const emailRef = db.ref("emails");
+      emailRef.once("value", (emailSnapshot) => {
+        const emails = Object.keys(emailSnapshot.val());
+        emails.forEach((email) => {
+          if (email && email != "emailCount") {
+            const lastUse = db.ref(`users/` + email + `/lastUse`);
+            lastUse.once("value", (useSnapshot) => {
+              const date = useSnapshot.val();
+              let currentTimestampMillis = Date.now();
+              let twoWeeksAgoMillis =
+                currentTimestampMillis - 2 * 7 * 24 * 60 * 60 * 1000;
+              if (
+                date &&
+                date < twoWeeksAgoMillis &&
+                email &&
+                email.trim() != ""
+              ) {
+                db.ref("users").child(email).remove();
+                emailRef.child(email).remove();
+
+                emailRef.child("emailCount").once("value", (snapshot) => {
+                  if (snapshot.exists()) {
+                    emailRef.update({
+                      emailCount: snapshot.val() - 1,
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      });
+      return res.status(200).send();
+    } catch {
+      return res.status(400).send();
+    }
+  });
+});
+
 function sanitizeEmail(email) {
   return email.replace(/\./g, ",");
+}
+
+function isValidEmail(email) {
+  var regex =
+    /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return regex.test(email);
 }

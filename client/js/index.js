@@ -1,4 +1,5 @@
-document.getElementById("submit").addEventListener("click", submit);
+const submitButton = document.getElementById("submit");
+submitButton.addEventListener("click", submit);
 
 let email = localStorage.getItem("email");
 let code = localStorage.getItem("code");
@@ -12,6 +13,7 @@ if (email && code) {
 
 async function submit(event) {
   event.preventDefault();
+  submitButton.disabled = true;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
@@ -23,33 +25,32 @@ async function submit(event) {
 }
 
 async function login(email, password) {
-  try {
-    const response = await fetch(
-      "https://us-central1-phideltlearning.cloudfunctions.net/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      }
-    );
-
-    console.log("Response:", response);
-
-    // Directly check the response status
-    if (response.status === 200) {
-      console.log("Login successful");
-      localStorage.setItem("email", email);
-      localStorage.setItem("code", password);
-      window.location.href = "/client/chat.html";
-    } else if (response.status === 400) {
-      console.log("Login failed");
+  const response = await fetch(
+    "https://us-central1-phideltlearning.cloudfunctions.net/login",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      }),
     }
-  } catch (error) {
-    console.log("Error:", error.message);
+  );
+
+  // Directly check the response status
+  if (response.status === 200) {
+    console.log("Login successful");
+    localStorage.setItem("email", email);
+    localStorage.setItem("code", password);
+    window.location.href = "/client/chat.html";
+  } else if (response.status === 400) {
+    localStorage.removeItem("email");
+    localStorage.removeItem("code");
+    document.querySelector(".loader").style.display = "none";
+    document.querySelector("form").style.display = "grid";
+    document.getElementById("error").style.display = "initial";
+    submitButton.disabled = false;
   }
 }

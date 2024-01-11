@@ -65,4 +65,9 @@ node_modules/
 # dotenv environment variables file
 .env
 
+# Added by me
 .DS_Store
+/SCP
+
+# Hide keys
+*.pem

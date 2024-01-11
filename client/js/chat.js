@@ -11,9 +11,10 @@ if (email && code) {
   window.location.href = "/client/index.html";
 }
 
-const params = new URLSearchParams(window.location.search);
-const chatQuery = params.get("chat");
 async function loadChat() {
+  document.getElementById("messages").innerHTML = "";
+  const params = new URLSearchParams(window.location.search);
+  const chatQuery = params.get("chat");
   let email = localStorage.getItem("email");
   if (email === "") return;
   try {
@@ -26,6 +27,7 @@ async function loadChat() {
         },
         body: JSON.stringify({
           email: email,
+          code: code,
           chatID: chatQuery,
         }),
       }
@@ -35,14 +37,11 @@ async function loadChat() {
     for (let i = 1; i <= data.chat.queryCount; i++) {
       const query = data.chat["query" + i];
       document.getElementById("messages").innerHTML +=
-        `<div class="msg--sent"><p>` +
-        query.req +
-        `</p>
-    </div>`;
+        `<div class="msg--sent">` + query.req + `</div>`;
       document.getElementById("messages").innerHTML +=
-        "<div class='msg--recieved'><p>" + query.res + "</p></div>";
+        "<div class='msg--recieved'>" + markdownToHTML(query.res) + "</div>";
     }
-    console.log(data);
+    updateMathJax();
   } catch {
     window.location.href = "/client/chat.html";
   }
@@ -60,30 +59,43 @@ async function loadPrev() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          code: code,
           email: email,
         }),
       }
     );
+
     const data = await response.json();
-    document.getElementById("prev").innerHTML = "";
-    for (let i = 1; i <= data.count; i++) {
-      document.getElementById("prev").innerHTML =
-        `<a href="?chat=` +
-        i +
-        `">` +
-        data.titles["title" + i] +
-        `</a>` +
-        document.getElementById("prev").innerHTML;
+    const prev = document.getElementById("prev");
+    prev.innerHTML = "";
+
+    for (let i = data.count; i >= 1 && i > data.count - 15; i--) {
+      prev.innerHTML += `<div data-id="${i}">${data.titles["title" + i]}</div>`;
     }
-  } catch {}
+
+    var children = Array.prototype.slice.call(prev.children);
+    children.forEach(function (child) {
+      child.addEventListener("click", function () {
+        let currentUrl = window.location.href;
+        let newUrl = new URL(currentUrl);
+        newUrl.searchParams.set("chat", child.dataset.id);
+        window.history.pushState({ path: newUrl.href }, "", newUrl.href);
+        loadChat();
+      });
+    });
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
 }
 
 window.onload = () => {
-  if (chatQuery) loadChat();
+  const params = new URLSearchParams(window.location.search);
+  const chatQuery = params.get("chat");
+  if (chatQuery) {
+    loadChat();
+  }
   loadPrev();
 };
-
-let messageCount = 0;
 
 document.getElementById("send").addEventListener("click", message);
 
@@ -91,35 +103,41 @@ let index = 0;
 let answer = "";
 function typeWriter() {
   if (index < answer.length) {
-    document.getElementById("message" + messageCount).innerHTML +=
-      answer.charAt(index);
+    document.getElementById(
+      "message" + document.querySelectorAll(".msg--sent").length
+    ).innerHTML += answer.charAt(index);
     index++;
-    setTimeout(typeWriter, Math.floor(Math.random() * (30 - 1 + 1)) + 1);
+    setTimeout(typeWriter, Math.floor(Math.random() * 10) + 1);
   } else {
     index = 0;
-    messageCount++;
+    document.getElementById(
+      "message" + document.querySelectorAll(".msg--sent").length
+    ).innerHTML = answer;
     answer = "";
-    loadPrev();
+    document.getElementById("send").disabled = false;
+    updateMathJax();
   }
 }
 
 async function message() {
   const message = document.getElementById("input").value;
   document.getElementById("input").value = "";
+  document.getElementById("send").disabled = true;
   if (message == "") return;
   document.getElementById("messages").innerHTML +=
-    `<div class="msg--sent"><p>` +
-    message +
-    `</p>
-    </div>`;
+    `<div class="msg--sent">` + message + `</div>`;
+  document.getElementById("messages").innerHTML += `<span id="dots"></span>`;
+
   const reply = await ask(message);
+  document.getElementById("dots").remove();
+
   document.getElementById("messages").innerHTML +=
-    `<div class="msg--recieved"><p id="message` +
-    messageCount +
-    `"></p>
-    </div>`;
+    `<div id="message` +
+    document.querySelectorAll(".msg--sent").length +
+    `" class="msg--recieved"></div>`;
   localStorage.setItem("chatID", reply.chatID);
-  answer = reply.answer;
+  answer = markdownToHTML(reply.answer);
+  loadPrev();
   typeWriter();
 }
 
@@ -127,7 +145,10 @@ async function ask(gptMessage) {
   let email = localStorage.getItem("email");
   if (email === "") return;
 
-  let newChat = document.getElementById("messages").childElementCount === 1;
+  const params = new URLSearchParams(window.location.search);
+  const chatQuery = params.get("chat");
+
+  let newChat = document.getElementById("messages").childElementCount === 2;
   let chatID;
   if (chatQuery) {
     chatID = chatQuery;
@@ -135,7 +156,6 @@ async function ask(gptMessage) {
     chatID = localStorage.getItem("chatID");
     if (chatID) {
       chatID = parseInt(chatID);
-      console.log(chatID);
     } else {
       chatID = -1;
     }
@@ -150,12 +170,19 @@ async function ask(gptMessage) {
       body: JSON.stringify({
         message: gptMessage,
         email: email,
+        code: code,
         new: newChat,
         chatID: chatID,
       }),
     }
   );
   const data = await response.json();
+
+  let currentUrl = window.location.href;
+  let newUrl = new URL(currentUrl);
+  newUrl.searchParams.set("chat", data.chatID);
+  window.history.pushState({ path: newUrl.href }, "", newUrl.href);
+
   return data;
 }
 
@@ -185,3 +212,52 @@ async function checkLogin(email, password) {
     console.log("Error:", error.message);
   }
 }
+
+function markdownToHTML(markdown) {
+  // Convert headers
+  markdown = markdown.replace(/^### (.*$)/gim, "<strong>$1</strong>");
+  markdown = markdown.replace(/^## (.*$)/gim, "<strong>$1</strong>");
+  markdown = markdown.replace(/^# (.*$)/gim, "<strong>$1</strong>");
+  // Convert bold text
+  markdown = markdown.replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>");
+
+  // Convert italic text
+  markdown = markdown.replace(/\*(.*)\*/gim, "<em>$1</em>");
+
+  // Convert blockquotes
+  markdown = markdown.replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>");
+
+  // Convert code blocks
+  markdown = markdown.replace(
+    /```([\s\S]*?)```/gim,
+    "<pre><code>$1</code></pre>"
+  );
+
+  // Convert inline code
+  markdown = markdown.replace(/`(.+?)`/gim, "<code>$1</code>");
+
+  // Convert unordered lists
+  markdown = markdown.replace(/^\s*[-\*+] (.+)$/gim, "<li>$1</li>");
+  markdown = markdown.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
+  markdown = markdown.replace(/<\/ul>\s*<ul>/gim, ""); // Fixes consecutive list items issue
+
+  // Convert newlines to <br>
+  markdown = markdown.replace(/\n$/gim, " <br /><br />");
+
+  return markdown.trim();
+}
+
+// Assuming you load your content and then call this function
+function updateMathJax() {
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById("messages")]);
+  }
+}
+
+function adjustVH() {
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+
+window.addEventListener("resize", adjustVH);
+adjustVH();

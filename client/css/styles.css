@@ -31,14 +31,15 @@ nav {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 14.5vh;
+  height: 10vh;
   width: 100vw;
   border-bottom: 3px solid var(--color-dark);
 }
 
 nav img {
   width: 15%;
-  max-width: 200px;
+  max-width: 140px;
+  min-width: 100px;
 }
 
 nav p {
@@ -49,19 +50,20 @@ nav p {
 
 .container {
   width: 100vw;
-  height: 86vh;
+  height: 90vh;
   display: grid;
 }
 
 .chat {
-  height: 84vh;
+  height: calc(var(--vh, 1vh) * 89);
   display: grid;
   grid-template-rows: 80% 20%;
 }
 
 #messages {
   height: fit-content;
-  max-height: 68vh;
+  max-height: calc(var(--vh, 1vh) * 72);
+  padding: 0 5px;
   display: grid;
   width: 90%;
   justify-self: center;
@@ -69,7 +71,8 @@ nav p {
 }
 
 .msg--sent,
-.msg--recieved {
+.msg--recieved,
+#dots {
   height: fit-content;
   min-width: 200px;
   max-width: 50%;
@@ -77,6 +80,9 @@ nav p {
   border-radius: 10px;
   position: relative;
   margin: 10px;
+  font-weight: 500;
+  font-size: 19px;
+  word-wrap: break-word;
 }
 
 .msg--sent {
@@ -85,17 +91,38 @@ nav p {
   justify-self: right;
 }
 
-.msg--recieved {
+.msg--recieved,
+#dots {
   background: #dddddd;
   color: #171717;
 }
 
-.msg--recieved p,
-.msg--sent p {
-  font-weight: 500;
-  font-size: 19px;
-  margin: 0;
-  word-wrap: break-word;
+#dots {
+  width: 22px;
+  min-width: min-content;
+  height: min-content;
+  font-size: 30px;
+  padding-top: 5px;
+}
+
+@keyframes dotAnimation {
+  0% {
+    content: ".";
+  }
+  33% {
+    content: "..";
+  }
+  66% {
+    content: "...";
+  }
+  100% {
+    content: ".";
+  }
+}
+
+#dots::after {
+  content: "...";
+  animation: dotAnimation 2s infinite;
 }
 
 .user_input {
@@ -165,11 +192,13 @@ nav p {
 }
 
 #prev {
+  width: 100%;
   height: fit-content;
   font-size: 20px;
   margin: 5px;
-  max-height: calc(80vh - 86px);
+  max-height: 72vh;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 #prev > * {
@@ -177,7 +206,7 @@ nav p {
   border: 2px solid lightgray;
   border-bottom: 3px solid lightgrey;
   border-radius: 10px;
-  margin: 5px;
+  margin: 10px;
   padding: 10px;
   transition: 0.3s;
   text-decoration: none;
@@ -192,7 +221,7 @@ nav p {
 
 @media screen and (min-width: 768px) {
   .container {
-    grid-template-columns: 21% 79%;
+    grid-template-columns: 22% 78%;
   }
 
   .sidenav {
@@ -225,6 +254,14 @@ form {
   border-radius: 20px;
   padding: 60px 20px 40px 20px;
   margin: 0 10px 40px 10px;
+}
+
+#error {
+  display: none;
+  color: red;
+  font-size: 19px;
+  font-weight: 600;
+  text-align: center;
 }
 
 form label {
@@ -278,4 +315,34 @@ form label {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.math-inline {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.1em;
+}
+
+.math-block {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.1em;
+  display: block;
+  text-align: center;
+  padding: 0;
+  width: 100%;
+}
+
+.MathJax {
+  margin: 0 !important;
+}
+
+.MJX-TEX {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+code {
+  white-space: pre-wrap; /* Allows the text to wrap */
+  word-wrap: break-word; /* Breaks words at the end of the line */
+  display: block;
 }
