@@ -136,7 +136,7 @@ app.post("/", async (req, res) => {
           role: "user",
           content:
             "Give a simple and straightforward title for this prompt and ensure it's less than 10 words: " +
-            message,
+            message.substring(0, 200),
         },
       ],
     });
