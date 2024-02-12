@@ -27,13 +27,80 @@ body {
 }
 
 nav {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   height: 10vh;
   width: 100vw;
   border-bottom: 3px solid var(--color-dark);
+}
+
+.phidelt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+  align-items: center;
+}
+
+.buttons > a {
+  color: white;
+  text-align: center;
+  padding: 13px 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  font-size: 17px;
+  font-weight: 700;
+  transition: 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.gpt {
+  background: #1957a1;
+}
+
+.gpt:hover {
+  background-color: #033567;
+  transform: scale(1.04);
+}
+
+.chegg {
+  background: rgb(226, 157, 28);
+}
+
+.chegg:hover {
+  background: rgb(198, 129, 0);
+  transform: scale(1.04);
+}
+
+.cheggGo {
+  max-width: 300px;
+  background: rgb(226, 157, 28);
+  color: white;
+  text-align: center;
+  padding: 13px 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  font-size: 17px;
+  font-weight: 700;
+  transition: 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 nav img {
@@ -246,7 +313,7 @@ nav p {
   margin: 30px;
 }
 
-form {
+#loginForm {
   display: none;
   width: 100%;
   max-width: 300px;
@@ -264,7 +331,7 @@ form {
   text-align: center;
 }
 
-form label {
+#loginForm label {
   font-size: 18px;
   font-weight: 500;
   margin-left: 10px;
@@ -342,7 +409,60 @@ form label {
 }
 
 code {
-  white-space: pre-wrap; /* Allows the text to wrap */
-  word-wrap: break-word; /* Breaks words at the end of the line */
+  white-space: pre-wrap;
+  word-wrap: break-word;
   display: block;
+}
+
+.schedule-container {
+  font-size: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 2rem auto;
+}
+
+.schedule-container h2 {
+  margin-top: 0;
+  color: var(--color-dark);
+}
+
+#scheduleForm {
+  margin-bottom: 20px;
+}
+
+#scheduleForm input[type="datetime-local"] {
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+#scheduleForm button {
+  padding: 10px;
+  margin: 20px 0;
+  background: var(--color-azure);
+  color: var(--color-accent);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#scheduleForm button:hover {
+  background: #033567;
+}
+
+#scheduleList div {
+  background: var(--color-accent);
+  color: var(--color-dark);
+  margin-bottom: 5px;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 5px solid var(--color-azure);
+}
+
+.remove-btn {
+  margin-left: 50px;
 }

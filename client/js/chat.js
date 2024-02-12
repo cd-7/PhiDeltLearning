@@ -203,7 +203,7 @@ async function checkLogin(email, password) {
     );
     if (response.status === 200) {
       document.getElementById("load").style.display = "none";
-      document.querySelector("nav").style.display = "flex";
+      document.querySelector("nav").style.display = "grid";
       document.querySelector(".container").style.display = "grid";
     } else if (response.status === 400) {
       window.location.href = "/client/index.html";

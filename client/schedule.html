@@ -3,18 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="PhiDeltLearning is here to help Utah Alpha Phi Delts in their academic journeys."
-    />
-    <meta property="og:title" content="PhiDeltLearning" />
-    <meta
-      property="og:description"
-      content="PhiDeltLearning: Become the greatest version of yourself."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://phideltlearning.com" />
-    <title>PhiDeltLearning - Login</title>
+    <title>PhiDeltLearning - Chegg</title>
     <link
       rel="apple-touch-icon"
       sizes="180x180"
@@ -42,18 +31,32 @@
     <link rel="stylesheet" href="css/normalize.css" />
   </head>
   <body>
-    <div class="login">
-      <img class="logo" src="media/logo.png" alt="flag" />
+    <nav>
+      <div></div>
+      <div class="phidelt">
+        <img src="media/phidelt.png" alt="PhiDelt Logo" />
+        <p>PhiDeltLearning</p>
+      </div>
+      <div class="buttons">
+        <a class="gpt" href="/chat">GPT-4</a>
+        <a class="chegg" href="/schedule">Chegg</a>
+      </div>
+    </nav>
+    <div id="load">
       <div class="loader"></div>
-      <form id="loginForm">
-        <p id="error">Error logging in try again.</p>
-        <label for="email">Email:</label>
-        <input id="email" type="email" placeholder="Email..." />
-        <label for="password">Phi Delt Password:</label>
-        <input id="password" type="password" placeholder="Password..." />
-        <button id="submit">Submit</button>
-      </form>
     </div>
-    <script src="js/index.js"></script>
+    <div class="schedule-container">
+      <h2>Schedule Chegg Usage Period</h2>
+      <p>** 2 hour maximum</p>
+      <a class="cheggGo" href="/chegg">Go To Chegg</a>
+      <form id="scheduleForm">
+        <input type="datetime-local" id="startTime" required />
+        <input type="datetime-local" id="endTime" required />
+        <button type="submit">Add Usage Period</button>
+      </form>
+      <h3>Current Taken Time Slots:</h3>
+      <div id="scheduleList"></div>
+    </div>
+    <script src="js/schedule.js"></script>
   </body>
 </html>

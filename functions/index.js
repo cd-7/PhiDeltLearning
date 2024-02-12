@@ -46,7 +46,7 @@ app.post("/", async (req, res) => {
     messages.push({
       role: "system",
       content:
-        "You are a helpful assistant. You have the capability to use LaTeX for formatting and displaying mathematical formulas. Please use LaTeX syntax when presenting mathematical or scientific expressions. You are also capable of using Markdown for text formatting. Please utilize Markdown syntax for formatting text, such as for headings, lists, links, and emphasis.",
+        "You are a helpful assistant. You have the capability to use LaTeX for formatting and displaying mathematical formulas. Please use LaTeX syntax when presenting mathematical or scientific expressions. You are also capable of using Markdown for text formatting. Please utilize Markdown syntax for formatting text, such as for headings, lists, links, and emphasis. IT IS IMPERATIVE THAT YOU BE BREIF AND SUMMARIZE OFTEN. GIVE ONLY THE MINIMAL AMOUNT OF INFORMATION.",
     });
 
     if (!newChat) {
@@ -67,6 +67,7 @@ app.post("/", async (req, res) => {
     }
     messages.push({ role: "user", content: message });
 
+    console.log(messages);
     const completion = await openai.chat.completions.create({
       model: "gpt-4-1106-preview",
       messages: messages,
@@ -136,7 +137,7 @@ app.post("/", async (req, res) => {
           role: "user",
           content:
             "Give a simple and straightforward title for this prompt and ensure it's less than 10 words: " +
-            message.substring(0, 200),
+            message.substring(0, 150),
         },
       ],
     });
@@ -242,12 +243,6 @@ exports.login = functions.https.onRequest((req, res) => {
 
       const emailRef = db.ref("emails");
 
-      const countSnapshot = await new Promise((resolve, reject) => {
-        emailRef.child("emailCount").once("value", resolve, reject);
-      });
-
-      const count = countSnapshot.val();
-
       emailRef.child(email).once("value", (snapshot) => {
         if (!snapshot.exists()) {
           const emailObject = {};
@@ -256,7 +251,6 @@ exports.login = functions.https.onRequest((req, res) => {
           let propertyValue = emailObject[propertyName];
           emailRef.update({
             [propertyName]: propertyValue,
-            emailCount: count + 1,
           });
         }
       });
@@ -275,29 +269,21 @@ exports.checkLastUses = functions.https.onRequest((req, res) => {
       emailRef.once("value", (emailSnapshot) => {
         const emails = Object.keys(emailSnapshot.val());
         emails.forEach((email) => {
-          if (email && email != "emailCount") {
+          if (email) {
             const lastUse = db.ref(`users/` + email + `/lastUse`);
             lastUse.once("value", (useSnapshot) => {
               const date = useSnapshot.val();
               let currentTimestampMillis = Date.now();
-              let twoWeeksAgoMillis =
-                currentTimestampMillis - 2 * 7 * 24 * 60 * 60 * 1000;
+              let oneWeekAgoMillis =
+                currentTimestampMillis - 1 * 7 * 24 * 60 * 60 * 1000;
               if (
                 date &&
-                date < twoWeeksAgoMillis &&
+                date < oneWeekAgoMillis &&
                 email &&
                 email.trim() != ""
               ) {
                 db.ref("users").child(email).remove();
                 emailRef.child(email).remove();
-
-                emailRef.child("emailCount").once("value", (snapshot) => {
-                  if (snapshot.exists()) {
-                    emailRef.update({
-                      emailCount: snapshot.val() - 1,
-                    });
-                  }
-                });
               }
             });
           }
@@ -319,3 +305,122 @@ function isValidEmail(email) {
     /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return regex.test(email);
 }
+
+exports.addSchedulePeriod = functions.https.onRequest((req, res) => {
+  cors2(req, res, async () => {
+    const { email, startTime, endTime } = req.body;
+
+    // Check if email, startTime, and endTime are provided
+    if (!email || !startTime || !endTime) {
+      res
+        .status(400)
+        .json({ message: "Email, start time, and end time are required." });
+      return;
+    }
+
+    // Parse dates and check validity
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({ message: "Invalid start time or end time." });
+      return;
+    }
+
+    const schedulesRef = db.ref(`schedule`);
+    const schedulesSnapshot = await schedulesRef.once("value");
+    const allSchedules = schedulesSnapshot.val() || {};
+
+    // Check if the user already has a schedule
+    const sanitizedEmail = sanitizeEmail(email);
+    if (allSchedules[sanitizedEmail]) {
+      res.status(400).json({
+        message:
+          "User already has a schedule. Please remove the old schedule before adding a new one.",
+      });
+      return;
+    }
+
+    // Check for conflicting schedules across all emails
+    for (const emailKey in allSchedules) {
+      const userSchedule = allSchedules[emailKey];
+      if (userSchedule) {
+        const existingStart = new Date(userSchedule.start);
+        const existingEnd = new Date(userSchedule.end);
+        if (start < existingEnd && end > existingStart) {
+          res.status(400).json({
+            message: "Conflicting schedule exists with another user.",
+          });
+          return;
+        }
+      }
+    }
+
+    // Set the new schedule period for the specified email
+    const userScheduleRef = schedulesRef.child(sanitizedEmail);
+    await userScheduleRef.set({ start: startTime, end: endTime });
+
+    res.status(200).json({ message: "Schedule added successfully." });
+  });
+});
+
+exports.getSchedule = functions.https.onRequest((req, res) => {
+  cors2(req, res, async () => {
+    try {
+      const now = new Date().toISOString();
+
+      const schedulesRef = db.ref(`schedule`);
+      const snapshot = await schedulesRef.once("value");
+
+      if (snapshot.exists()) {
+        const schedules = snapshot.val() || {};
+        let hasOldSchedules = false;
+
+        for (const email in schedules) {
+          const schedule = schedules[email];
+
+          const scheduleEndTime = new Date(schedule.end);
+
+          if (scheduleEndTime < new Date(now)) {
+            await schedulesRef.child(email).remove();
+            hasOldSchedules = true;
+          }
+        }
+
+        if (hasOldSchedules) {
+          const updatedSnapshot = await schedulesRef.once("value");
+          res.status(200).json(updatedSnapshot.val() || {});
+        } else {
+          res.status(200).json(schedules);
+        }
+      } else {
+        res.status(200).json({});
+      }
+    } catch (error) {
+      console.error("Error getting schedules: ", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
+});
+
+exports.removeSchedulePeriod = functions.https.onRequest((req, res) => {
+  cors2(req, res, async () => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).send("Email is required.");
+        return;
+      }
+
+      // Reference to the user's schedule in the database
+      const scheduleRef = db.ref(`schedule/${sanitizeEmail(email)}`);
+
+      // Remove the schedule
+      await scheduleRef.remove();
+
+      res.status(200).send("Schedule removed successfully.");
+    } catch (error) {
+      console.error("Error removing schedule: ", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
+});
