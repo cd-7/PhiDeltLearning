@@ -12,7 +12,6 @@ if (email && code) {
 }
 
 async function loadChat() {
-  document.getElementById("messages").innerHTML = "";
   const params = new URLSearchParams(window.location.search);
   const chatQuery = params.get("chat");
   let email = localStorage.getItem("email");
@@ -33,6 +32,7 @@ async function loadChat() {
       }
     );
     const data = await response.json();
+    document.getElementById("messages").innerHTML = "";
 
     for (let i = 1; i <= data.chat.queryCount; i++) {
       const query = data.chat["query" + i];
