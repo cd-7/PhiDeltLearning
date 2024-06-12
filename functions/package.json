@@ -28,7 +28,7 @@
   },
   "private": true,
   "resolutions": {
-    "**/google-gax/@grpc/grpc-js": ">=1.10.9",
+    "**/@grpc/grpc-js": ">=1.10.9",
     "**/braces": ">=3.0.3"
   }
 }
