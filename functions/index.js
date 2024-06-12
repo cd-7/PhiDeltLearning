@@ -35,10 +35,12 @@ app.post("/", async (req, res) => {
     userRef
       .once("value", (snapshot) => {
         if (!snapshot.exists()) {
+          console.error("User doesn't exist");
           return res.status(400).send();
         }
       })
       .catch(() => {
+        console.error("User doesn't exist");
         return res.status(400).send();
       });
 
@@ -68,7 +70,7 @@ app.post("/", async (req, res) => {
     messages.push({ role: "user", content: message });
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+      model: "gpt-4o",
       messages: messages,
     });
     let answer = completion.choices[0].message.content;
@@ -157,6 +159,7 @@ app.post("/", async (req, res) => {
       return res.status(200).json({ answer: answer, chatID: chatID });
     }
   } catch (error) {
+    console.error(error);
     return res.status(400).send();
   }
 });
