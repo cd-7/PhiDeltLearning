@@ -96,14 +96,10 @@ app.post("/", async (req, res) => {
           });
           userRef.update({ conversationCount: conversationCount });
           if (conversationCount > 15) {
-            const oldRef = userRef.child(
-              "conversation" + (conversationCount - 15)
-            );
             const titleRef = userRef
               .child("titles")
               .child("title" + (conversationCount - 15));
             titleRef.remove();
-            oldRef.remove();
           }
         })
         .catch((error) => {
