@@ -70,7 +70,7 @@ app.post("/", async (req, res) => {
     messages.push({ role: "user", content: message });
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-2024-08-06",
       messages: messages,
     });
     let answer = completion.choices[0].message.content;
@@ -128,7 +128,7 @@ app.post("/", async (req, res) => {
         });
     }
     const completionTitle = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
